@@ -1,0 +1,15 @@
+# LXMF propagation node — lets clients mint stamps without a remote node.
+[Unit]
+Description=LXMF Propagation Node (Reticulum stamp minting for clients)
+After=rnsd.service
+Requires=rnsd.service
+
+[Service]
+Type=simple
+User=mesh
+ExecStart=/opt/mesh-bridge/rns-bridge/.venv/bin/python -u /opt/mesh-bridge/rns-bridge/rns_propagation.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

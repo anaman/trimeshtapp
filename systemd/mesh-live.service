@@ -1,0 +1,17 @@
+# Mesh Live — unified MeshCore+Meshtastic web feed (SSE dashboard).
+[Unit]
+Description=Mesh Live — unified MeshCore+Meshtastic web feed
+After=network.target mesh-gateway.service
+Wants=mesh-gateway.service
+
+[Service]
+Type=simple
+User=mesh
+WorkingDirectory=/opt/mesh-bridge/mesh-relay
+Environment=MESH_LIVE_PORT=8462
+ExecStart=/opt/mesh-bridge/mesh-relay/.venv/bin/python -u mesh_live.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

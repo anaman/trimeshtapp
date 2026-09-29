@@ -1,0 +1,7 @@
+{
+  "announce_app": "meshbridge",
+  "announce_name": "bridge",
+  "reannounce_interval_s": 60,
+  "announce_enabled": true,
+  "lxmf_enabled": true
+}

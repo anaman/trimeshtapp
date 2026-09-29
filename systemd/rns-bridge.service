@@ -1,0 +1,16 @@
+# RNS <-> MeshCore/Meshtastic bridge (the Reticulum leg of the stack).
+[Unit]
+Description=RNS <-> MeshCore/Meshtastic bridge
+After=network.target rnsd.service
+Wants=rnsd.service
+
+[Service]
+Type=simple
+User=mesh
+WorkingDirectory=/opt/mesh-bridge/rns-bridge
+ExecStart=/opt/mesh-bridge/rns-bridge/.venv/bin/python -u rns_bridge.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

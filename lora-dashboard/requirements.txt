@@ -1,0 +1,6 @@
+# Dashboard extra deps (installed into the mesh-relay venv)
+flask
+waitress
+paho-mqtt>=2.0
+PyYAML
+meshcore

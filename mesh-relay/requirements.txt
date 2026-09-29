@@ -1,0 +1,6 @@
+# Mesh relay venv (gateway / watcher / mqtt bridge / mesh live)
+# Versions unpinned on purpose; pin your own once a working set is found.
+meshcore
+meshtastic
+pyserial
+paho-mqtt>=2.0

@@ -1,0 +1,16 @@
+# RNS peer tracker — SQLite token IDs, unique-per-period counts, notices.
+[Unit]
+Description=RNS Peer Tracker (unique peers per period + throttled notices)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mesh
+WorkingDirectory=/opt/mesh-bridge/rns-bridge
+ExecStart=/usr/bin/python3 -u /opt/mesh-bridge/rns-bridge/rns_peer_tracker.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

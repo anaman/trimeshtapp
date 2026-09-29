@@ -1,0 +1,19 @@
+# runtime state / secrets — never commit
+mesh-relay/ports.json
+mesh-relay/mqtt_bridge.json
+mesh-relay/state/
+rns-bridge/state/
+rns-bridge/logs/
+lora-dashboard/config/dashboard.json
+lora-dashboard/config/login_attempts.json
+lora-dashboard/config/devices_state.json
+lora-dashboard/audit.log
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# platformio
+esp32/c6-wifi-server/.pio/

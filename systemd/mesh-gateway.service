@@ -1,0 +1,21 @@
+# Mesh gateway — owns BOTH radios (MeshCore + Meshtastic serial legs).
+# Adjust User/WorkingDirectory to your install (repo assumed at /opt/mesh-bridge).
+[Unit]
+Description=Mesh Gateway — MeshCore+Meshtastic radio bridge (owns both radios)
+Wants=network.target
+After=network.target
+
+[Service]
+Type=simple
+User=mesh
+WorkingDirectory=/opt/mesh-bridge/mesh-relay
+TimeoutStartSec=300
+# 120s boot delay: the radios re-enumerate after boot; connecting earlier
+# fails. External restart handlers must expect this delay.
+ExecStartPre=/bin/sleep 120
+ExecStart=/opt/mesh-bridge/mesh-relay/.venv/bin/python -u mesh_gateway.py
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

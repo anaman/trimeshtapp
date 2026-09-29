@@ -1,0 +1,15 @@
+# Status HTTP endpoint for the Reticulum leg (JSON + simple HTML).
+[Unit]
+Description=RNS Status HTTP server (status endpoint for the Reticulum leg)
+After=rnsd.service rns-bridge.service
+Wants=rnsd.service
+
+[Service]
+Type=simple
+User=mesh
+ExecStart=/usr/bin/python3 -u /opt/mesh-bridge/rns-bridge/rns_status_server.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

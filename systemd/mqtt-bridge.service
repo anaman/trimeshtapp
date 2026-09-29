@@ -1,0 +1,16 @@
+# MQTT bridge — multi-broker client for the MeshCore node relay.
+[Unit]
+Description=MQTT Bridge (multi-broker client for the MeshCore relay)
+Wants=network.target
+After=network.target mesh-gateway.service
+
+[Service]
+Type=simple
+User=mesh
+WorkingDirectory=/opt/mesh-bridge/mesh-relay
+ExecStart=/opt/mesh-bridge/mesh-relay/.venv/bin/python -u mqtt_bridge.py
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

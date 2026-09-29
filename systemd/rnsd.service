@@ -1,0 +1,14 @@
+# Reticulum transport — owns the RNode LoRa leg (KISS interface).
+[Unit]
+Description=Reticulum Transport (RNode LoRa leg)
+After=network.target
+
+[Service]
+Type=simple
+User=mesh
+ExecStart=/opt/mesh-bridge/rns-bridge/.venv/bin/rnsd
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

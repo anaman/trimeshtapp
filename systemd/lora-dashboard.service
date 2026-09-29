@@ -1,0 +1,17 @@
+# LoRa bridge web dashboard (Flask + waitress behind a reverse proxy).
+[Unit]
+Description=LoRa Bridge Dashboard (web control panel)
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mesh
+WorkingDirectory=/opt/mesh-bridge/lora-dashboard
+ExecStart=/opt/mesh-bridge/mesh-relay/.venv/bin/python -u app.py
+Restart=on-failure
+RestartSec=5
+Environment=LORA_DASH_PORT=8452
+
+[Install]
+WantedBy=multi-user.target

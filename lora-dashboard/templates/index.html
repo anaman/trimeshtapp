@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoRa Bridge — Control Panel</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login-view" class="login-wrap">
+  <div class="login-card">
+    <div class="logo-row">
+      <span class="logo-dot"></span>
+      <div>
+        <h1>LoRa Bridge</h1>
+        <p class="muted">MeshCore · Meshtastic · Reticulum — control panel</p>
+      </div>
+    </div>
+    <form id="login-form" autocomplete="off">
+      <label>MQTT username
+        <input type="text" name="username" id="login-user" autocomplete="username" spellcheck="false" required>
+      </label>
+      <label>MQTT password
+        <input type="password" name="password" id="login-pass" autocomplete="current-password" required>
+      </label>
+      <div id="login-error" class="error-box hidden"></div>
+      <button type="submit" class="primary" id="login-btn">Sign in with MQTT credentials</button>
+      <p class="muted small">Authenticates against the local mosquitto broker.</p>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app-view" class="hidden">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo-dot"></span>
+      <strong>LoRa Bridge</strong>
+      <span class="muted">MeshCore · Meshtastic · Reticulum</span>
+    </div>
+    <nav id="tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="bridge">Bridge</button>
+      <button class="tab" data-tab="protocols">Protocols</button>
+      <button class="tab" data-tab="devices">Devices</button>
+      <button class="tab" data-tab="logs">Logs</button>
+    </nav>
+    <div class="userbox">
+      <span id="user-label" class="muted"></span>
+      <button id="logout-btn" class="ghost">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ OVERVIEW ============ -->
+    <section id="tab-overview" class="tab-panel">
+      <div class="grid services" id="svc-cards"></div>
+      <div class="grid two">
+        <div class="card">
+          <h2>Gateway</h2>
+          <pre id="gateway-info" class="mono small"></pre>
+        </div>
+        <div class="card">
+          <h2>Reticulum transport</h2>
+          <pre id="rns-info" class="mono small"></pre>
+        </div>
+        <div class="card">
+          <h2>RNS bridge leg <span class="muted small">(in-process transport)</span></h2>
+          <div id="rns-leg" class="unit-list"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Peer tracker <span class="muted small">(unique peers, rolling window)</span></h2>
+        <div id="pt-overview" class="unit-list">
+          <div class="unit"><span class="dot missing"></span><span class="muted small">loading…</span></div>
+        </div>
+        <div class="muted small">Window: <span id="pt-window">—</span> · change in Bridge → Peer tracker</div>
+      </div>
+      <div class="card">
+        <h2>Serial / ESP32 units</h2>
+        <div id="serial-units" class="unit-list"></div>
+      </div>
+      <div class="card">
+        <h2>Recent bridge traffic</h2>
+        <div id="event-feed" class="feed"></div>
+      </div>
+    </section>
+
+    <!-- ============ BRIDGE ============ -->
+    <section id="tab-bridge" class="tab-panel hidden">
+      <div class="card">
+        <h2>MQTT brokers <span class="muted small">(mqtt_bridge.json → mqtt-bridge.service)</span></h2>
+        <div id="broker-list"></div>
+        <button id="broker-add" class="ghost">+ Add broker</button>
+        <button id="broker-save" class="primary">Save brokers &amp; restart bridge</button>
+        <div id="broker-msg" class="result-box"></div>
+      </div>
+      <div class="card">
+        <h2>RNS bridge <span class="muted small">(rns_bridge.json → rns-bridge.service)</span></h2>
+        <div class="form-grid" id="rns-form">
+          <label>Announce app
+            <input type="text" id="rns-app" value="meshbridge" spellcheck="false">
+          </label>
+          <label>Announce name
+            <input type="text" id="rns-name" value="bridge" spellcheck="false">
+          </label>
+          <label>Re-announce interval (s)
+            <input type="number" id="rns-interval" value="60" min="5" max="86400">
+          </label>
+          <label class="check"><input type="checkbox" id="rns-announce" checked> announce enabled</label>
+          <label class="check"><input type="checkbox" id="rns-lxmf" checked> LXMF (Sideband) enabled</label>
+          <div class="span2 muted small" id="rns-identity"></div>
+        </div>
+        <button id="rns-save" class="primary">Save RNS bridge &amp; restart</button>
+        <div id="rns-msg" class="result-box"></div>
+      </div>
+      <div class="card">
+        <h2>Peer tracker <span class="muted small">(SQLite token IDs · unique-per-period · throttled notices)</span></h2>
+        <div class="form-grid" id="pt-form">
+          <label>Notification period
+            <select id="pt-unit">
+              <option value="seconds">seconds</option>
+              <option value="minutes">minutes</option>
+              <option value="hours">hours</option>
+              <option value="days" selected>days</option>
+            </select>
+          </label>
+          <label>Value
+            <input type="number" id="pt-value" value="1" min="1" max="3650" step="1">
+          </label>
+          <label class="check"><input type="checkbox" id="pt-enabled" checked> notices enabled</label>
+          <div class="span2 muted small" id="pt-status"></div>
+        </div>
+        <button id="pt-save" class="primary">Save tracker settings</button>
+        <div id="pt-msg" class="result-box"></div>
+      </div>
+      <div class="card">
+        <h2>Service control</h2>
+        <div class="row" id="svc-restart-row"></div>
+        <div class="muted small">Restarts use <code>sudo -n systemctl</code> against an allowlist. mesh-gateway restarts block ~120&nbsp;s (serial reconnect); use the <em>Mesh Relay Flush/Restart</em> procedure when messages are in flight.</div>
+      </div>
+    </section>
+
+    <!-- ============ PROTOCOLS ============ -->
+    <section id="tab-protocols" class="tab-panel hidden">
+      <div class="card">
+        <h2>MeshCore (ESP32 companion — TCP :5000)</h2>
+        <div class="row">
+          <input type="text" id="mc-host" placeholder="device host (LAN or tailnet IP)" spellcheck="false">
+          <input type="number" id="mc-port" value="5000" style="width:90px">
+          <button id="mc-connect" class="primary">Connect &amp; read</button>
+        </div>
+        <pre id="mc-out" class="mono small"></pre>
+        <div class="form-grid" id="mc-form" style="display:none">
+          <label>Frequency (Hz)
+            <input type="text" id="mc-freq" placeholder="e.g. 910525000" spellcheck="false">
+          </label>
+          <label>Bandwidth (Hz)
+            <input type="text" id="mc-bw" placeholder="e.g. 62500" spellcheck="false">
+          </label>
+          <label>Spreading factor
+            <input type="text" id="mc-sf" placeholder="e.g. 7" spellcheck="false">
+          </label>
+          <label>Coding rate
+            <input type="text" id="mc-cr" placeholder="e.g. 5" spellcheck="false">
+          </label>
+          <label>TX power (dBm)
+            <input type="text" id="mc-txp" placeholder="e.g. 22" spellcheck="false">
+          </label>
+          <label>Node name
+            <input type="text" id="mc-name" placeholder="e.g. meshcore-node" spellcheck="false">
+          </label>
+        </div>
+        <div class="row" id="mc-actions" style="display:none">
+          <button id="mc-apply" class="primary">Apply radio settings</button>
+          <button id="mc-advert" class="ghost">Send advert</button>
+          <button id="mc-reboot" class="ghost danger">Reboot device</button>
+        </div>
+        <div id="mc-msg" class="result-box"></div>
+      </div>
+
+      <div class="card">
+        <h2>Meshtastic (ESP32 — TCP :4403)</h2>
+        <div class="row">
+          <input type="text" id="mt-host" placeholder="device host" spellcheck="false">
+          <button id="mt-connect" class="primary">Connect &amp; read</button>
+        </div>
+        <pre id="mt-out" class="mono small"></pre>
+        <div class="form-grid" id="mt-form" style="display:none">
+          <label>Region <input type="text" id="mt-region" spellcheck="false"></label>
+          <label>Modem preset <input type="text" id="mt-preset" spellcheck="false"></label>
+          <label>Frequency (MHz) <input type="text" id="mt-freq" spellcheck="false"></label>
+          <label>Bandwidth (kHz) <input type="text" id="mt-bw" spellcheck="false"></label>
+          <label>Spreading factor <input type="text" id="mt-sf" spellcheck="false"></label>
+          <label>Coding rate <input type="text" id="mt-cr" spellcheck="false"></label>
+          <label>TX power (dBm) <input type="text" id="mt-txp" spellcheck="false"></label>
+          <label>MQTT root <input type="text" id="mt-mqtt-root" spellcheck="false"></label>
+        </div>
+        <div class="row" id="mt-actions" style="display:none">
+          <button id="mt-apply" class="primary">Apply settings</button>
+          <button id="mt-reboot" class="ghost danger">Reboot device</button>
+        </div>
+        <div id="mt-msg" class="result-box"></div>
+      </div>
+
+      <div class="card">
+        <h2>Reticulum / RNode (ESP32 — serial)</h2>
+        <div class="row">
+          <input type="text" id="rn-port" value="/dev/ttyUSB0" spellcheck="false" style="width:200px">
+          <button id="rn-connect" class="primary">Read EEPROM config</button>
+        </div>
+        <pre id="rn-out" class="mono small"></pre>
+        <div class="form-grid" id="rn-form" style="display:none">
+          <label>Frequency (MHz) <input type="text" id="rn-freq" spellcheck="false"></label>
+          <label>Bandwidth (kHz) <input type="text" id="rn-bw" spellcheck="false"></label>
+          <label>Spreading factor <input type="text" id="rn-sf" spellcheck="false"></label>
+          <label>Coding rate <input type="text" id="rn-cr" spellcheck="false"></label>
+          <label>TX power (dBm) <input type="text" id="rn-txp" spellcheck="false"></label>
+        </div>
+        <div class="row">
+          <button id="rn-apply" class="primary">Write EEPROM (stops rnsd briefly)</button>
+          <label class="check"><input type="checkbox" id="rn-restart" checked> restart rnsd after write</label>
+        </div>
+        <div class="warn-box">Writing EEPROM briefly stops <code>rnsd</code> (it owns the serial port). LoRa link drops for a few seconds.</div>
+        <div id="rn-msg" class="result-box"></div>
+      </div>
+    </section>
+
+    <!-- ============ DEVICES ============ -->
+    <section id="tab-devices" class="tab-panel hidden">
+      <div class="card">
+        <h2>Scan targets <span class="muted small">(LAN / tailnet / advertised subnets / custom IPs)</span></h2>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="sc-lan" checked> LAN scan (/24)</label>
+          <label class="check"><input type="checkbox" id="sc-tailnet" checked> Tailnet peers</label>
+          <label class="check"><input type="checkbox" id="sc-adv" checked> Advertised subnets (≤/24)</label>
+        </div>
+        <label>Custom targets — IPs, CIDRs or hostnames, comma-separated
+          <input type="text" id="sc-custom" placeholder="10.0.0.5, 192.168.9.0/24, node.local" spellcheck="false">
+        </label>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="sc-p5000" checked> :5000 MeshCore</label>
+          <label class="check"><input type="checkbox" id="sc-p4403" checked> :4403 Meshtastic</label>
+          <label>timeout (ms) <input type="number" id="sc-timeout" value="400" min="100" max="5000" style="width:90px"></label>
+          <label>auto-scan (min, 0=off) <input type="number" id="sc-auto" value="0" min="0" max="1440" style="width:90px"></label>
+          <button id="sc-save" class="ghost">Save settings</button>
+          <button id="dev-scan" class="primary">Scan now</button>
+        </div>
+        <div id="dev-scan-info" class="muted small"></div>
+      </div>
+
+      <div class="card">
+        <h2>Discovered devices <span class="muted small">(registry: first/last seen, alive = &lt;10 min)</span></h2>
+        <div id="dev-discovered" class="unit-list"></div>
+        <div id="dev-verify" class="result-box mono small"></div>
+      </div>
+
+      <div class="card">
+        <h2>Saved devices <span class="muted small">(always scanned; shown in protocol pickers)</span></h2>
+        <div id="dev-saved"></div>
+        <div class="row">
+          <input type="text" id="dev-name" placeholder="label (e.g. my-node)" spellcheck="false">
+          <input type="text" id="dev-host" placeholder="host:port (e.g. 192.168.1.50:5000)" spellcheck="false">
+          <button id="dev-add" class="ghost">+ Add device</button>
+        </div>
+        <button id="dev-save-all" class="primary">Save device list</button>
+        <div id="dev-msg" class="result-box"></div>
+      </div>
+    </section>
+
+    <!-- ============ LOGS ============ -->
+    <section id="tab-logs" class="tab-panel hidden">
+      <div class="card">
+        <h2>Audit trail</h2>
+        <pre id="audit-out" class="mono small"></pre>
+        <button id="audit-refresh" class="ghost">Refresh</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "brokers": [
+    {
+      "name": "local",
+      "host": "127.0.0.1",
+      "port": 1883,
+      "username": "",
+      "password": "",
+      "tls": false,
+      "mode": "both",
+      "status": true,
+      "publish_topic": "meshcore/mynode",
+      "subscribe_topic": "meshcore/mynode",
+      "status_topic": "meshcore/status"
+    },
+    {
+      "name": "community-in",
+      "host": "mqtt.example.net",
+      "port": 1883,
+      "username": "CHANGEME",
+      "password": "CHANGEME",
+      "tls": false,
+      "mode": "in",
+      "status": false,
+      "publish_topic": "meshcore/mynode",
+      "subscribe_topic": "meshcore/mynode",
+      "status_topic": "meshcore/status"
+    }
+  ]
+}
